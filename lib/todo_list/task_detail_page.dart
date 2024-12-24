@@ -102,9 +102,16 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                     context: context,
                     builder: (context) {
                       return BrnCalendarView(
+                        displayMode: DisplayMode.month,
                         selectMode: SelectMode.single,
-                        displayMode: DisplayMode.month
-    
+                        minDate: DateTime.now(),
+                        maxDate: DateTime(2101),
+                        dateChange: (DateTime date) {
+                          setState(() {
+                            _selectedDate = date;
+                          });
+                          Navigator.pop(context);
+                        },
                       );
                     }
                   );

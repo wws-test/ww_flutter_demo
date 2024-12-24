@@ -54,7 +54,7 @@ class _SelectServiceListState extends State<SelectServiceList> {
                     ),
                     SizedBox(height: 22.0), // Row和列表之间的间距
                     // aaa
-                    Container(
+                    SizedBox(
                       height: 300,
                       child: Stack(
                         children: [

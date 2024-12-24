@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:bruno/bruno.dart';
+import 'package:flutter/foundation.dart';
+
 import 'mission_page.dart';
 import 'my_page.dart';
 
@@ -10,6 +12,7 @@ void main() {
       brandPrimary: Colors.blue,
     ),
   ));
+  
   runApp(const MyApp());
 }
 

@@ -27,7 +27,7 @@ class CellGroupList extends StatelessWidget {
                 width: 40,
               ),
               SizedBox(width: 8.0),
-              Container(
+              SizedBox(
                   // decoration: BoxDecoration(
                   //   border:
                   //       Border.all(color: Colors.grey, width: 1), // 设置网格线的样式
@@ -52,7 +52,7 @@ class CellGroupList extends StatelessWidget {
                 width: 40,
               ),
               SizedBox(width: 8.0),
-              Container(
+              SizedBox(
                   // decoration: BoxDecoration(
                   //   border:
                   //       Border.all(color: Colors.grey, width: 1), // 设置网格线的样式
@@ -81,7 +81,7 @@ class CellGroupList extends StatelessWidget {
                 width: 40,
               ),
               SizedBox(width: 8.0),
-              Container(
+              SizedBox(
                   // decoration: BoxDecoration(
                   //   border:
                   //       Border.all(color: Colors.grey, width: 1), // 设置网格线的样式
@@ -106,7 +106,7 @@ class CellGroupList extends StatelessWidget {
                 width: 40,
               ),
               SizedBox(width: 8.0),
-              Container(
+              SizedBox(
                   // decoration: BoxDecoration(
                   //   border:
                   //       Border.all(color: Colors.grey, width: 1), // 设置网格线的样式

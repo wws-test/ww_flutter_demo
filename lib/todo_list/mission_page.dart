@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'todo_item.dart';
-import 'package:bruno/bruno.dart';
 import 'task_detail_page.dart';
+import 'services/db_service.dart';
 
 class MissionPage extends StatefulWidget {
   const MissionPage({super.key});
@@ -33,6 +33,8 @@ class _MissionPageState extends State<MissionPage> {
     _editingController = TextEditingController();
     _rewardController = TextEditingController();
     _noteController = TextEditingController();
+    // 使用 Future.microtask 确保在 build 之后加载数据
+    Future.microtask(() => _loadTodos());
   }
 
   @override
@@ -43,56 +45,67 @@ class _MissionPageState extends State<MissionPage> {
     _noteController.dispose();
     super.dispose();
   }
-
+  // 处理任务项点击事件
+  void _onItemTap(TodoItemMap item) {
+    // 导航到任务详细信息页面
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => TaskDetailPage(
+          task: item,
+          onUpdate: _updateTaskDetails,
+        ),
+      ),
+    );
+  }
   // 提交任务的方法
-  void _submit(value) {
-    // 创建一个包含任务信息的 Map 对象
-    Map<String, dynamic> obj = {
-      "id": id,
-      "value": value,
-      "isChecked": false,
-      "errorText": null,
-      "dueDate": _selectedDate,
-      "note": _noteController.text,
-      "reward": _rewardController.text,
-    };
-    // 更新状态，将新任务添加到列表中，并重置 ID 和文本编辑控制器
-    setState(() {
-      list.insert(0, TodoItemMap.fromMap(obj));
-      id = id + 1;
-      _editingController.clear();
-      _rewardController.clear();
-      _noteController.clear();
-      _selectedDate = null;
-    });
+  void _submit(value) async {
+    TodoItemMap todo = TodoItemMap(
+      id: id,
+      value: value,
+      isChecked: false,
+      errorText: null,
+      dueDate: _selectedDate,
+      note: _noteController.text,
+      reward: _rewardController.text,
+    );
+    
+    await DBService.insertTodo(todo);
+    await _loadTodos();
+    
+    // 重置输入
+    _editingController.clear();
+    _rewardController.clear();
+    _noteController.clear();
+    _selectedDate = null;
   }
 
-  // 更新任务内容的方法
   void _update(text, item) {
-    // 使用 map 方法遍历列表，更新指定任务的内容
+    // var arr = list.map((v) => v).toList();
+    // 思路:原本list在map后得到的类型是Iterable<TodoItemMap>实际上需要List<TodoItemMap>
+    // 所以最后要toList()转换
+    // 之后要对个别的���做处理,注意:如果v=>v,前面不用括号包裹,会报错 Undefined name 'v'.
+    // 如下:
+    // var arr = list.map(v => v).toList();
+
     var arr = list.map((v) {
       if (v.id == item.id) {
         v.value = text;
       }
       return v;
     }).toList();
-    // 更新状态，应用更改后的任务列表
+
     setState(() {
       list = arr;
     });
   }
 
-  // 删除任务的方法
-  void _remove(item) {
-    // 更新状态，从列表中移除指定任务
-    setState(() {
-      list.removeWhere((v) => v.id == item.id);
-    });
+  void _remove(TodoItemMap item) async {
+    await DBService.deleteTodo(item.uuid);
+    await _loadTodos();
   }
 
-  // 切换任务完成状态的方法
   void _onChanged(boolean, item) {
-    // 更新状态，切换指定任务的完成状态
     setState(() {
       list = list.map((v) {
         if (v.id == item.id) {
@@ -103,41 +116,34 @@ class _MissionPageState extends State<MissionPage> {
     });
   }
 
-  // 检查并提交任务的方法
   void _checkBeforeSubmit(String value, item) {
-    // 如果任务项为空，则设置错误文本
-    item = item?? true;
+    item = item ?? true;
     if (value.trim() == '') {
       setState(() {
-        if (item!= true) {
+        if (item != true) {
           item.errorText = '失败! 内容不能为空';
         } else {
           _errorText = '失败! 内容不能为空';
         }
       });
-    } 
-    // 如果任务内容包含多余空格，则设置错误文本
-    else {
+    } else {
       var lastValue = value.trim();
-      if (lastValue.length!= value.length) {
+      if (lastValue.length != value.length) {
         setState(() {
-          if (item!= true) {
+          if (item != true) {
             item.errorText = '失败! 包含多余空格';
           } else {
             _errorText = '失败! 包含多余空格';
           }
         });
-      } 
-      // 如果任务内容通过检查，则更新或提交任务
-      else {
-        if (item!= true) {
+      } else {
+        if (item != true) {
           _update(value, item);
         } else {
           _submit(value);
         }
-        // 重置错误文本
         setState(() {
-          if (item!= true) {
+          if (item != true) {
             item.errorText = null;
           } else {
             _errorText = null;
@@ -147,19 +153,16 @@ class _MissionPageState extends State<MissionPage> {
     }
   }
 
-  // 更新任务详细信息的方法
-  void _updateTaskDetails(TodoItemMap item, {DateTime? dueDate, String? note, String? reward}) {
-    // 更新状态，设置任务的截止日期、备注和奖励
-    setState(() {
-      if (dueDate!= null) item.dueDate = dueDate;
-      if (note!= null) item.note = note;
-      if (reward!= null) item.reward = reward;
-    });
+  void _updateTaskDetails(TodoItemMap item, {DateTime? dueDate, String? note, String? reward}) async {
+    if (dueDate != null) item.dueDate = dueDate;
+    if (note != null) item.note = note;
+    if (reward != null) item.reward = reward;
+    
+    await DBService.updateTodo(item);
+    await _loadTodos();
   }
 
-  // 打开任务详细信息页面的方法
   void _openTaskDetail(TodoItemMap task) {
-    // 使用 Navigator 导航到任务详细信息页面
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -171,9 +174,28 @@ class _MissionPageState extends State<MissionPage> {
     );
   }
 
+  // 修改加载方法，添加错误处理
+  Future<void> _loadTodos() async {
+    try {
+      final todos = await DBService.getTodos();
+      if (mounted) {  // 确保 widget 还在树中
+        setState(() {
+          list = todos;
+        });
+      }
+    } catch (e) {
+      print('Error loading todos: $e');  // 添加错误日志
+      // 可以在这里添加错误提示
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('加载任务失败')),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    // 构建任务管理页面的 UI
     return Center(
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -190,7 +212,6 @@ class _MissionPageState extends State<MissionPage> {
                 prefixIcon: const Icon(Icons.add_circle_outline, color: Colors.blue),
               ),
               onSubmitted: (value) {
-                // 当用户提交任务时，调用检查并提交任务的方法
                 _checkBeforeSubmit(value, null);
               }
             ),
